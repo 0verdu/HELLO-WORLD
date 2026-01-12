@@ -176,8 +176,8 @@ void bcm_radio_disable(void) {
 
 ## DISCLOSURE TIMELINE
 
-- **2026-01-09:** Vulnerability discovered via post-DFU forensics
-- **2026-01-09:** LiveTrace v3 logs captured showing CID 0x6D810001 exploitation
+- **2026-01-11:** Vulnerability discovered via post-DFU forensics
+- **2026-01-11:** LiveTrace v3 logs captured showing CID 0x6D810001 exploitation
 - **2026-01-11:** Firmware root cause confirmed in SoC_RAM.bin analysis
 - **2026-01-11:** Public disclosure
 
