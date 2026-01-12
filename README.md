@@ -1,5 +1,5 @@
 # HELLO WORLD
-## Zero-Click CompanionLink Vulnerabilty 
+## Zero-Click CompanionLink Hijack 
 **CVSS 9.3 | CVE-2025-XXXXX**
 
 ---
@@ -7,6 +7,8 @@
 ## SUMMARY
 
 iPhones using the Broadcom BCM4377/BCM4378/BCM4387 WiFi/Bluetooth combo chipsets fail to clear Low Power Mode (LPM) RAM during radio state transitions. Pre-configured BLE scan parameters and connection state persist across power cycles, DFU restores, and network resets, enabling zero-click unauthenticated CompanionLink hijacking.
+
+**Remote Weaponization:** iMessage attack chain [CVE-2025-31200/31201](https://github.com/JGoyd/iOS-Attack-Chain-CVE-2025-31200-CVE-2025-31201) enables kernel-level firmware memory write, removing proximity constraint and enabling global-reach exploitation.
 
 - **Affected:** iPhone 13, 14, and 15 series (All BCMWLANCore V3.0 hardware) 
 - **Status:** Unpatched as of 2026-01-11  
@@ -72,12 +74,33 @@ Connection established 5 seconds post-radio initialization. MTU=23 (no GATT nego
 
 ---
 
+## REMOTE WEAPONIZATION
+
+**Vector:** iMessage MP4 → AppleBCMWLAN kernel access → BCM firmware write
+
+The local BLE exploitation described above requires physical proximity. However, the iMessage attack chain (CVE-2025-31200 → CVE-2025-31201) achieves kernel execution in the AppleBCMWLAN driver, providing direct MMIO access to BCM firmware memory at offset `0x190340`.
+
+**Capability Enhancement:**
+```
+Local:  Attacker BLE device cached → wait for state transition → backdoor
+Remote: Write BLE config to firmware → force state transition → backdoor
+```
+
+**Technical Basis:** AppleBCMWLAN kernel access enables direct write to LPM table (1KB at 0x190340), removing proximity requirement. PME enforcement failure during CoreAudio exploitation propagates corruption to WiFi driver via shared hardware power domain.
+
+**Result:** Remote zero-click installation of DFU-persistent firmware backdoor.
+
+See: `5. Remote Exploitation/Attack Chain.md` for detailed technical analysis.
+
+---
+
 ## IMPACT
 
 **Unauthenticated connection hijacking via persistent LPM state** (potential for remote code execution during radio state transitions).
 
 **Attack surface:**
-- Adjacent network (Bluetooth range ~10m)
+- Local: Adjacent network (Bluetooth range ~10m)
+- Remote: Global (via iMessage CVE-2025-31200/31201 chain)
 - No user interaction required
 - Survives reset 
 - Bypasses code signing, SIP, sandbox (firmware-level)
@@ -129,6 +152,8 @@ Full reproduction steps: `3. Reproduction/EXPLOIT_POC.sh`
 4. Evidence/
    ├── SoC_RAM.bin               BCM firmware dump (2.0M)
    └── firmware_evidence.md      Hex dumps and verification commands
+5. Remote Exploitation/
+   └── Attack Chain.md           iMessage → BCM firmware weaponization analysis
 ```
 
 ---
@@ -212,4 +237,4 @@ This disclosure is for research and defensive security purposes. Proof-of-concep
 ---
 
 **Researcher:** Joseph Goydish II 
-**Evidence:** Firmware dump + LiveTrace v3 post-DFU forensics 
+**Evidence:** Firmware dump + LiveTrace v3 post-DFU forensics
